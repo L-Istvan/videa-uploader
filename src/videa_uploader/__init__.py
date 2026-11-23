@@ -4,4 +4,4 @@ from .upload import upload_video
 from .subtitles import attach_subtitle
 
 __all__ = ['save_login', 'upload_video', 'attach_subtitle']
-__version__ = '0.1.0'
+__version__ = '0.2.0'

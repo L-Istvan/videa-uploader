@@ -24,6 +24,32 @@ def response(data, *, ok=True):
 
 
 class UploadTests(unittest.TestCase):
+    def test_multiword_tags_are_entered_separately_and_confirmed(self):
+        page = MagicMock()
+        tags = ['Series 25 magyar felirattal', 'Series 25 rész', 'Series 25']
+        page.locator.return_value.evaluate_all.return_value = tags
+        u.fill_metadata(page, 'Title', 'Description', tags=tags)
+        field = page.get_by_role.return_value
+        self.assertEqual([c.args[0] for c in field.fill.call_args_list], tags)
+        self.assertEqual([c.args[0] for c in field.press.call_args_list], ['Enter'] * 3)
+
+    def test_unregistered_tags_stop_before_metadata_is_saved(self):
+        page = MagicMock()
+        page.locator.return_value.evaluate_all.return_value = []
+        with self.assertRaisesRegex(RuntimeError, 'címkét'):
+            u.fill_metadata(page, 'Title', '', tags=['Missing tag'])
+
+    def test_tags_are_normalized_and_invalid_tags_fail_before_upload(self):
+        self.assertEqual(u.normalize_tags([' Series 25 ', 'Series 25', 'Series 26']), ['Series 25', 'Series 26'])
+        for tags in ('one string', [''], ['two,tags'], ['<tag>'], ['a\nb'], [123]):
+            with self.subTest(tags=tags), tempfile.TemporaryDirectory() as tmp, patch('videa_uploader.upload.sync_playwright') as playwright:
+                video = Path(tmp) / 'video.mp4'
+                video.write_bytes(b'video')
+                with self.assertRaises(ValueError):
+                    u.upload_video(video, title='Title', tags=tags)
+                playwright.assert_not_called()
+                self.assertFalse(video.with_suffix('.videa.json').exists())
+
     def test_force_preserves_previous_state_and_uploads_again(self):
         for status in ('complete', 'transferring'):
             with self.subTest(status=status), tempfile.TemporaryDirectory() as tmp, patch('videa_uploader.upload.sync_playwright') as playwright:

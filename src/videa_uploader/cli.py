@@ -21,6 +21,7 @@ def main(argv=None):
     upload.add_argument('video', type=Path)
     upload.add_argument('--title', required=True)
     upload.add_argument('--description', default='')
+    upload.add_argument('--tag', action='append', default=[], help='A tag; repeat this option for multiple tags.')
     upload.add_argument('--category', default='film/animáció', help='Exact normal-Videa category label.')
     upload.add_argument('--subtitle', type=Path, help='Optionally attach an SRT after uploading.')
     upload.add_argument('--subtitle-name', default='Magyar')
@@ -47,7 +48,7 @@ def main(argv=None):
                 from .subtitles import _load_subtitle
                 _load_subtitle(args.subtitle, args.subtitle_name)
             url = upload_video(args.video, title=args.title, description=args.description,
-                category=args.category, headless=args.headless, timeout_seconds=args.timeout,
+                category=args.category, tags=args.tag, headless=args.headless, timeout_seconds=args.timeout,
                 session_path=args.session, state_path=args.state, force=args.force,
                 email=os.getenv('VIDEA_EMAIL'), password=os.getenv('VIDEA_PASSWORD'))
             if args.subtitle:

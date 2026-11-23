@@ -68,6 +68,17 @@ feltöltési űrlap meglévő alapbeállítását követi, amely nyilvános is l
 videa-uploader upload video.mp4 --title "Példa" --description "Leírás"
 ```
 
+A címkék több szóból is állhatnak; mindegyiket külön `--tag` kapcsolóval add meg:
+
+```bash
+videa-uploader upload video.mp4 --title "Példa" --tag "Sorozat 25" --tag "Magyar felirat"
+```
+
+Pythonból: `tags=["Sorozat 25", "Magyar felirat"]`. A kliens külön-külön rögzíti
+a címkéket, és mentés előtt ellenőrzi, hogy az űrlap mindet átvette-e. A kész
+feltöltések újrahasználata változatlan; az új adatok nem írják át a korábbi videót.
+
+
 Felirat csatolásához a feltöltést követően:
 
 ```bash
@@ -252,6 +263,17 @@ the upload form's existing default, which may be public.
 ```bash
 videa-uploader upload video.mp4 --title "Example" --description "Description"
 ```
+
+Tags can contain spaces. Supply each tag separately:
+
+```bash
+videa-uploader upload video.mp4 --title "Example" --tag "Series 25" --tag "Hungarian subtitles"
+```
+
+Python callers can pass `tags=["Series 25", "Hungarian subtitles"]`. Tags are
+committed individually in the form and checked before saving. Existing
+completed uploads are still reused; changing metadata does not edit an already
+uploaded video or cause an automatic duplicate upload.
 
 To attach a subtitle after uploading:
 
