@@ -52,11 +52,33 @@ def checked_response(response, action):
         raise RuntimeError(f'Videa {action}: szerverhibakód {code}.')
     return data
 
-def fill_metadata(page, title, description, *, category='film/animáció'):
+def normalize_tags(tags):
+    if isinstance(tags, str):
+        raise ValueError('A tags paraméter szövegek listája legyen, ne egyetlen szöveg.')
+    result = []
+    for tag in tags:
+        if not isinstance(tag, str) or not tag.strip() or re.search(r'[\x00-\x1f,<>\"]', tag):
+            raise ValueError('A címke nem lehet üres, és nem tartalmazhat vesszőt, idézőjelet vagy vezérlőkaraktert.')
+        tag = tag.strip()
+        if tag not in result:
+            result.append(tag)
+    return result
+
+
+def fill_metadata(page, title, description, *, category='film/animáció', tags=()):
     page.get_by_label('Tartalom típusa:').select_option('0')
     page.locator('#title').fill(title)
     page.locator('.se-wrapper-inner.se-wrapper-wysiwyg').fill(description)
     page.locator('#category_select').select_option(label=category)
+    if tags:
+        field = page.get_by_role('textbox', name='Címkék:', exact=True)
+        for tag in tags:
+            field.fill(tag)
+            field.press('Enter')
+        registered = page.locator('.videa-keyword[data-value]').evaluate_all(
+            '(nodes) => nodes.map(node => node.getAttribute("data-value"))')
+        if not set(tags).issubset(registered):
+            raise RuntimeError('A Videa nem vette át az összes megadott címkét.')
     page.locator('#paidpromotion-no').check()
     read_terms = page.get_by_role('button', name='Elolvasom', exact=True)
     if read_terms.is_visible():
@@ -84,7 +106,7 @@ def saved_video_url(html, vcode):
     return None
 
 def upload_video(video, *, title, description='', headless=False,
-                 timeout_seconds=7200, session_path=SESSION, email=None, password=None, category='film/animáció', state_path=None, force=False):
+                 timeout_seconds=7200, session_path=SESSION, email=None, password=None, category='film/animáció', state_path=None, force=False, tags=()):
     """Az eredeti MP4-et küldi fel; nem éget rá és nem csatol külön feliratot.
 
     A force=True archiválja a korábbi állapotot és új feltöltést indít.
@@ -96,6 +118,7 @@ def upload_video(video, *, title, description='', headless=False,
         raise ValueError(f'A feltöltendő videó hiányzik vagy üres: {video}')
     if not title.strip() or timeout_seconds <= 0:
         raise ValueError('Nem üres cím és pozitív feltöltési időkorlát szükséges.')
+    tags = normalize_tags(tags)
     stat = video.stat()
     identity = {'path': str(video), 'size': stat.st_size, 'mtime_ns': stat.st_mtime_ns}
     state_path = Path(state_path).expanduser().resolve() if state_path is not None else video.with_suffix('.videa.json')
@@ -148,7 +171,7 @@ def upload_video(video, *, title, description='', headless=False,
                 state.update(status='uploaded', vcode=vcode, url=HOME + '/player?v=' + vcode)
                 atomic_json(state_path, state)
                 print('Videa: a fájlátvitel kész, a videóadatok kitöltése...', flush=True)
-                fill_metadata(page, title, description, category=category)
+                fill_metadata(page, title, description, category=category, tags=tags)
                 state['status'] = 'publishing'
                 atomic_json(state_path, state)
                 print('Videa: a fájlátvitel kész, az adatlap mentése következik...', flush=True)

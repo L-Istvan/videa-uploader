@@ -13,6 +13,12 @@ from videa_uploader.session import open_upload
 
 
 class StandaloneTests(unittest.TestCase):
+    def test_cli_passes_each_tag_as_one_string(self):
+        with patch('videa_uploader.cli.upload_video', return_value='https://videa.hu/video') as upload, redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.main(['upload', 'video.mp4', '--title', 'Title',
+                '--tag', 'Series 25 rész', '--tag', 'Series 25 magyar felirattal']), 0)
+            self.assertEqual(upload.call_args.kwargs['tags'], ['Series 25 rész', 'Series 25 magyar felirattal'])
+
     def test_force_upload_and_subtitle_use_same_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             srt = Path(tmp) / 'hu.srt'
