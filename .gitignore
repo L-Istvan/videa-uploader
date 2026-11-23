@@ -1,0 +1,32 @@
+# Python-környezet, gyorsítótárak és build-kimenetek
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage*
+htmlcov/
+# Helyi belépési adatok (a kitölthető minta maradjon verziókezelve)
+.env
+.env.*
+!.env.example
+# Böngészős munkamenetek és feltöltési állapotok
+.videa-session.json
+session.json
+*.videa.json
+*.backup-*.json
+# Helyi naplók, videók, feliratok és részleges letöltések
+*.log
+*.mp4
+*.mkv
+*.webm
+*.srt
+*.part
+# Szerkesztők és operációs rendszerek helyi fájljai
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
